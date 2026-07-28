@@ -1,32 +1,301 @@
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+"""
+vectorstore.py
+
+Creates, updates, loads and searches the FAISS vector database.
+"""
+
+from pathlib import Path
+from typing import List, Optional
+
+from langchain_core.documents import Document
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_community.vectorstores import FAISS
 
-from backend.config import GOOGLE_API_KEY
+from backend.config import (
+    GOOGLE_API_KEY,
+    GEMINI_EMBEDDING_MODEL,
+    FAISS_INDEX_PATH,
+    TOP_K,
+)
+from backend.utils import LOGGER
 
 
-def build_vector_store(documents):
-    """
-    Convert LangChain Documents into a FAISS vector database.
-    """
+class VectorStoreManager:
+    """Handles all FAISS vector store operations."""
 
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=1000,
-        chunk_overlap=200
-    )
+    def __init__(self):
 
-    chunks = splitter.split_documents(documents)
+        self.index_path = Path(FAISS_INDEX_PATH)
 
-    embeddings = GoogleGenerativeAIEmbeddings(
-        model="gemini-embedding-2-preview",
-        google_api_key=GOOGLE_API_KEY
-    )
+        self.embeddings = GoogleGenerativeAIEmbeddings(
+            model=GEMINI_EMBEDDING_MODEL,
+            google_api_key=GOOGLE_API_KEY,
+        )
 
-    vector_store = FAISS.from_documents(
-        documents=chunks,
-        embedding=embeddings
-    )
+        self.vectorstore: Optional[FAISS] = None
 
-    vector_store.save_local("faiss_index")
+    # -----------------------------------------------------
+    # Create Vector Store
+    # -----------------------------------------------------
 
-    return len(chunks)
+    def create(self, documents: List[Document]) -> FAISS:
+        """
+        Create a new FAISS index.
+        """
+
+        LOGGER.info("Creating FAISS index...")
+
+        self.vectorstore = FAISS.from_documents(
+            documents=documents,
+            embedding=self.embeddings,
+        )
+
+        self.save()
+
+        LOGGER.info("FAISS index created successfully.")
+
+        return self.vectorstore
+
+    # -----------------------------------------------------
+    # Add Documents
+    # -----------------------------------------------------
+
+    def add_documents(
+        self,
+        documents: List[Document],
+    ):
+        """
+        Add new documents into the existing FAISS index.
+        """
+
+        if self.vectorstore is None:
+
+            self.load()
+
+        if self.vectorstore is None:
+
+            self.create(documents)
+
+            return
+
+        LOGGER.info(
+            f"Adding {len(documents)} chunks to vector database."
+        )
+
+        self.vectorstore.add_documents(documents)
+
+        self.save()
+
+        LOGGER.info("Vector database updated.")
+
+    # -----------------------------------------------------
+    # Save
+    # -----------------------------------------------------
+
+    def save(self):
+        """
+        Save FAISS index locally.
+        """
+
+        if self.vectorstore is None:
+            return
+
+        self.index_path.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        self.vectorstore.save_local(
+            folder_path=str(self.index_path)
+        )
+
+        LOGGER.info(
+            f"Vector database saved to {self.index_path}"
+        )
+
+    # -----------------------------------------------------
+    # Load
+    # -----------------------------------------------------
+
+    def load(self) -> Optional[FAISS]:
+        """
+        Load an existing FAISS index.
+        """
+
+        if not self.index_path.exists():
+
+            LOGGER.warning("FAISS index not found.")
+
+            return None
+
+        try:
+
+            self.vectorstore = FAISS.load_local(
+                folder_path=str(self.index_path),
+                embeddings=self.embeddings,
+                allow_dangerous_deserialization=True,
+            )
+
+            LOGGER.info("FAISS index loaded.")
+
+            return self.vectorstore
+
+        except Exception as e:
+
+            LOGGER.exception(e)
+
+            return None
+
+    # -----------------------------------------------------
+    # Delete
+    # -----------------------------------------------------
+
+    def delete_index(self):
+        """
+        Delete the local FAISS index.
+        """
+
+        if not self.index_path.exists():
+            return
+
+        for file in self.index_path.iterdir():
+            file.unlink()
+
+        LOGGER.info("FAISS index deleted.")
+
+        self.vectorstore = None
+
+    # -----------------------------------------------------
+    # Similarity Search
+    # -----------------------------------------------------
+
+    def similarity_search(
+        self,
+        query: str,
+        k: int = TOP_K,
+    ) -> List[Document]:
+        """
+        Perform similarity search.
+        """
+
+        if self.vectorstore is None:
+
+            self.load()
+
+        if self.vectorstore is None:
+
+            raise RuntimeError(
+                "Vector database has not been created."
+            )
+
+        return self.vectorstore.similarity_search(
+            query=query,
+            k=k,
+        )
+
+    # -----------------------------------------------------
+    # Similarity Search With Score
+    # -----------------------------------------------------
+
+    def similarity_search_with_score(
+        self,
+        query: str,
+        k: int = TOP_K,
+    ):
+        """
+        Retrieve documents with similarity score.
+        """
+
+        if self.vectorstore is None:
+
+            self.load()
+
+        if self.vectorstore is None:
+
+            raise RuntimeError(
+                "Vector database has not been created."
+            )
+
+        return self.vectorstore.similarity_search_with_score(
+            query=query,
+            k=k,
+        )
+
+    # -----------------------------------------------------
+    # Retriever
+    # -----------------------------------------------------
+
+    def as_retriever(
+        self,
+        k: int = TOP_K,
+    ):
+        """
+        Return LangChain Retriever.
+        """
+
+        if self.vectorstore is None:
+
+            self.load()
+
+        if self.vectorstore is None:
+
+            raise RuntimeError(
+                "Vector database has not been created."
+            )
+
+        return self.vectorstore.as_retriever(
+            search_kwargs={
+                "k": k,
+            }
+        )
+
+    # -----------------------------------------------------
+    # Document Count
+    # -----------------------------------------------------
+
+    def document_count(self) -> int:
+        """
+        Return total number of indexed chunks.
+        """
+
+        if self.vectorstore is None:
+
+            self.load()
+
+        if self.vectorstore is None:
+            return 0
+
+        try:
+
+            return self.vectorstore.index.ntotal
+
+        except Exception:
+
+            return 0
+
+    # -----------------------------------------------------
+    # Check Index
+    # -----------------------------------------------------
+
+    def exists(self) -> bool:
+        """
+        Check whether a FAISS index exists.
+        """
+
+        return (
+            self.index_path.exists()
+            and any(self.index_path.iterdir())
+        )
+
+    # -----------------------------------------------------
+    # Reset
+    # -----------------------------------------------------
+
+    def reset(self):
+        """
+        Remove current vector database and start fresh.
+        """
+
+        self.delete_index()
+
+        self.vectorstore = None

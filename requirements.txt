@@ -15,3 +15,7 @@ python-dotenv
 python-multipart
 httpx
 jinja2
+pydantic
+pydantic-settings
+langchain-redis
+google-generativeai

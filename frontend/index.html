@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Internal Knowledge Assistant</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <!-- ========================================= -->
+        <!-- Sidebar -->
+        <!-- ========================================= -->
+
+        <aside class="sidebar">
+
+            <div class="logo">
+
+                <h2>📚 Internal Knowledge Assistant</h2>
+
+                <p>LangChain • Gemini • FAISS</p>
+
+            </div>
+
+            <div class="menu">
+
+                <button id="newSessionBtn" class="menu-btn">
+
+                    New Session
+
+                </button>
+
+                <button id="clearChatBtn" class="menu-btn">
+
+                    Clear Chat
+
+                </button>
+
+                <button id="clearCacheBtn" class="menu-btn">
+
+                    Clear Cache
+
+                </button>
+
+                <button id="deleteKbBtn" class="menu-btn danger">
+
+                    Delete Knowledge Base
+
+                </button>
+
+            </div>
+
+            <div class="status-card">
+
+                <h4>System Status</h4>
+
+                <p>
+
+                    Session :
+                    <span id="sessionId">
+                        -
+                    </span>
+
+                </p>
+
+                <p>
+
+                    Chunks :
+                    <span id="chunkCount">
+                        0
+                    </span>
+
+                </p>
+
+                <p>
+
+                    Status :
+                    <span id="serverStatus">
+
+                        Checking...
+
+                    </span>
+
+                </p>
+
+            </div>
+
+        </aside>
+
+        <!-- ========================================= -->
+        <!-- Main -->
+        <!-- ========================================= -->
+
+        <main class="main">
+
+            <!-- ========================================= -->
+            <!-- Header -->
+            <!-- ========================================= -->
+
+            <header>
+
+                <h1>
+
+                    Internal Knowledge Assistant
+
+                </h1>
+
+                <p>
+
+                    Upload a PDF or Website and ask questions
+                    grounded only on your knowledge base.
+
+                </p>
+
+            </header>
+
+            <!-- ========================================= -->
+            <!-- Upload Section -->
+            <!-- ========================================= -->
+
+            <section class="upload-section">
+
+                <div class="card">
+
+                    <h3>
+
+                        Upload PDF
+
+                    </h3>
+
+                    <input
+                        type="file"
+                        id="pdfFile"
+                        accept=".pdf">
+
+                    <button
+                        id="uploadPdfBtn">
+
+                        Upload PDF
+
+                    </button>
+
+                </div>
+
+                <div class="card">
+
+                    <h3>
+
+                        Upload Website
+
+                    </h3>
+
+                    <input
+                        type="text"
+                        id="urlInput"
+                        placeholder="https://example.com">
+
+                    <button
+                        id="uploadUrlBtn">
+
+                        Upload URL
+
+                    </button>
+
+                </div>
+
+            </section>
+
+            <!-- ========================================= -->
+            <!-- Chat Window -->
+            <!-- ========================================= -->
+
+            <section
+                class="chat-container">
+
+                <div
+                    id="chatMessages"
+                    class="chat-messages">
+
+                    <div
+                        class="message assistant">
+
+                        <div class="avatar">
+
+                            🤖
+
+                        </div>
+
+                        <div class="bubble">
+
+                            Hello 👋
+
+                            <br><br>
+
+                            Upload a document or website.
+
+                            <br>
+
+                            Then ask me anything about it.
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+            <!-- ========================================= -->
+            <!-- Sources -->
+            <!-- ========================================= -->
+
+            <section
+                class="sources-section">
+
+                <h3>
+
+                    Sources
+
+                </h3>
+
+                <div
+                    id="sourcesContainer">
+
+                    No sources available.
+
+                </div>
+
+            </section>
+
+            <!-- ========================================= -->
+            <!-- Chat Input -->
+            <!-- ========================================= -->
+
+            <section
+                class="chat-input-section">
+
+                <textarea
+                    id="questionInput"
+                    rows="3"
+                    placeholder="Ask a question..."></textarea>
+
+                <button
+                    id="sendBtn">
+
+                    Send
+
+                </button>
+
+            </section>
+
+                <!-- ========================================= -->
+            <!-- Loading -->
+            <!-- ========================================= -->
+
+            <div
+                id="loadingOverlay"
+                class="loading-overlay hidden">
+
+                <div class="spinner"></div>
+
+                <p id="loadingText">
+                    Processing...
+                </p>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Toast Notification -->
+    <!-- ========================================= -->
+
+    <div
+        id="toast"
+        class="toast hidden">
+
+        <span id="toastMessage">
+            Success
+        </span>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- Chat Message Template
+    <!-- ========================================= -->
+
+    <template id="messageTemplate">
+
+        <div class="message">
+
+            <div class="avatar"></div>
+
+            <div class="bubble"></div>
+
+        </div>
+
+    </template>
+
+    <!-- ========================================= -->
+    <!-- Source Template -->
+    <!-- ========================================= -->
+
+    <template id="sourceTemplate">
+
+        <div class="source-card">
+
+            <div class="source-title"></div>
+
+            <div class="source-page"></div>
+
+        </div>
+
+    </template>
+
+    <!-- ========================================= -->
+    <!-- Footer -->
+    <!-- ========================================= -->
+
+    <footer>
+
+        <p>
+
+            Internal Knowledge Assistant |
+            LangChain · Gemini · FAISS · Redis · LangSmith · FastAPI
+
+        </p>
+
+    </footer>
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>        
