@@ -1,4 +1,11 @@
+"""
+=========================================================
+Main FastAPI Application
+=========================================================
+"""
+
 from fastapi import FastAPI
+
 from backend.routes import router
 
 app = FastAPI(
@@ -6,12 +13,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Register all API routes
+# Register all API endpoints
 app.include_router(router)
+
 
 @app.get("/")
 def home():
+    """
+    Health Check API
+    """
+
     return {
         "status": "running",
-        "message": "Internal Knowledge Assistant API"
+        "application": "Internal Knowledge Assistant"
     }
