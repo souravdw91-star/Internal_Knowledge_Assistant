@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+langchain
+langchain-google-genai
+langchain-community
+langchain-core
+langsmith
+faiss-cpu
+pypdf
+beautifulsoup4
+lxml
+tiktoken
+redis
+python-dotenv
+python-multipart
+httpx
+jinja2
