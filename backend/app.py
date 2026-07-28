@@ -4,10 +4,13 @@ app.py
 FastAPI entry point.
 """
 
+from pathlib import Path
 import uvicorn
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from backend.config import (
     APP_NAME,
@@ -19,11 +22,23 @@ from backend.config import (
 )
 
 from backend.routes import router
-from backend.utils import print_banner, LOGGER
+from backend.utils import LOGGER, print_banner
 from backend.rag import rag_pipeline
 from backend.cache import redis_cache
 from backend.memory import redis_memory
 
+
+# -------------------------------------------------------
+# Paths
+# -------------------------------------------------------
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+FRONTEND_DIR = BASE_DIR / "frontend"
+
+
+# -------------------------------------------------------
+# FastAPI
+# -------------------------------------------------------
 
 app = FastAPI(
     title=APP_NAME,
@@ -32,6 +47,15 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# -------------------------------------------------------
+# Static Files
+# -------------------------------------------------------
+
+app.mount(
+    "/static",
+    StaticFiles(directory=str(FRONTEND_DIR)),
+    name="static",
+)
 
 # -------------------------------------------------------
 # CORS
@@ -40,7 +64,7 @@ app = FastAPI(
 origins = (
     ["*"]
     if ALLOWED_ORIGINS == "*"
-    else [origin.strip() for origin in ALLOWED_ORIGINS.split(",")]
+    else [o.strip() for o in ALLOWED_ORIGINS.split(",")]
 )
 
 app.add_middleware(
@@ -50,7 +74,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 # -------------------------------------------------------
 # Startup
@@ -80,19 +103,13 @@ async def startup():
         LOGGER.exception(e)
 
     if redis_cache.client:
-
         LOGGER.info("Redis cache ready.")
-
     else:
-
         LOGGER.warning("Redis cache unavailable.")
 
     if redis_memory.client:
-
         LOGGER.info("Redis memory ready.")
-
     else:
-
         LOGGER.warning("Redis memory unavailable.")
 
     LOGGER.info("Application started successfully.")
@@ -108,18 +125,14 @@ async def shutdown():
     LOGGER.info("Shutting down application...")
 
     try:
-
         if redis_cache.client:
             redis_cache.client.close()
-
     except Exception:
         pass
 
     try:
-
         if redis_memory.client:
             redis_memory.client.close()
-
     except Exception:
         pass
 
@@ -127,32 +140,28 @@ async def shutdown():
 
 
 # -------------------------------------------------------
-# Routers
+# API Routes
 # -------------------------------------------------------
 
-app.include_router(router)
-
+app.include_router(router, prefix="/api")
 
 # -------------------------------------------------------
-# Root
+# Frontend Routes
 # -------------------------------------------------------
 
-@app.get("/")
-async def home():
+@app.get("/", include_in_schema=False)
+async def index():
+    return FileResponse(FRONTEND_DIR / "index.html")
 
-    return {
 
-        "application": APP_NAME,
+@app.get("/style.css", include_in_schema=False)
+async def style():
+    return FileResponse(FRONTEND_DIR / "style.css")
 
-        "version": APP_VERSION,
 
-        "status": "Running",
-
-        "docs": "/docs",
-
-        "redoc": "/redoc",
-
-    }
+@app.get("/script.js", include_in_schema=False)
+async def script():
+    return FileResponse(FRONTEND_DIR / "script.js")
 
 
 # -------------------------------------------------------
@@ -160,25 +169,16 @@ async def home():
 # -------------------------------------------------------
 
 @app.get("/health")
-
 async def health():
 
     return {
-
         "status": "healthy",
-
         "application": APP_NAME,
-
         "version": APP_VERSION,
-
         "knowledge_base": rag_pipeline.knowledge_base_exists(),
-
         "indexed_chunks": rag_pipeline.chunk_count(),
-
         "redis_cache": redis_cache.client is not None,
-
         "redis_memory": redis_memory.client is not None,
-
     }
 
 
@@ -189,13 +189,8 @@ async def health():
 if __name__ == "__main__":
 
     uvicorn.run(
-
         "backend.app:app",
-
         host=HOST,
-
         port=PORT,
-
         reload=DEBUG,
-
     )
