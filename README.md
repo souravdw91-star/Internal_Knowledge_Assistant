@@ -1,31 +1,39 @@
 # 📚 Internal Knowledge Assistant
 
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11%2B-blue?style=for-the-badge&logo=python" alt="Python">
+  <img src="https://img.shields.io/badge/FastAPI-0.100%2B-009688?style=for-the-badge&logo=fastapi" alt="FastAPI">
+  <img src="https://img.shields.io/badge/LangChain-Enabled-1C3C3C?style=for-the-badge" alt="LangChain">
+  <img src="https://img.shields.io/badge/Google_Gemini-API-4285F4?style=for-the-badge&logo=google" alt="Google Gemini">
+  <img src="https://img.shields.io/badge/Redis-Cache%20%26%20Memory-DC382D?style=for-the-badge&logo=redis" alt="Redis">
+  <img src="https://img.shields.io/badge/FAISS-VectorStore-76B900?style=for-the-badge" alt="FAISS">
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
+</p>
+
+---
+
 A production-ready **Retrieval-Augmented Generation (RAG)** application built using **LangChain**, **Google Gemini**, **FAISS**, **Redis**, **FastAPI**, and **Vanilla JavaScript**.
 
 The application allows users to upload PDF documents or index website URLs, builds a local vector database, and answers questions grounded strictly on the uploaded knowledge base instead of relying on the LLM's general knowledge.
 
 ---
 
-# 🚀 Features
+## 🚀 Features
 
-* 📄 Upload PDF documents
-* 🌐 Index website URLs
-* 🤖 Chat with your own documents
-* 🔍 Retrieval-Augmented Generation (RAG)
-* 🧠 Google Gemini LLM integration
-* 📚 FAISS Vector Database
-* ⚡ Redis-powered conversation memory
-* 🚀 Redis response caching
-* 📖 Source citations
-* 💬 Multi-session chat support
-* 📊 Health monitoring endpoints
-* 📈 LangSmith tracing support
-* 🌍 REST API using FastAPI
-* 💻 Responsive frontend built with HTML, CSS and JavaScript
+* 📄 **Resilient PDF Upload**: Batches documents in chunks of 100 with automatic 30s retry loops to safely bypass free-tier Gemini API 429 rate limits.
+* 🌐 **Website Indexing**: Ingests and chunks HTML content from web URLs.
+* 🤖 **Multi-Purpose Conversation**: Seamlessly handles greetings, small talk, and introductions (e.g. *"Hi my name is Sourav"*) conversationally.
+* 🧠 **Direct LLM Fallback**: Chat with the assistant immediately before uploading any document, falling back directly to the LLM when no FAISS index exists.
+* 📚 **Vector Store & Grounded RAG**: Strict document QA matching using FAISS Vector Database and Gemini Embeddings.
+* 🔍 **Document Synonym Mapping**: Maps queries referring to *"the book"*, *"the PDF"*, or *"the document"* to summarize or answer about the context.
+* 🌍 **General Knowledge Fallback**: Falls back to the LLM's general knowledge when queries go beyond document context, with **smart citation filtering** (clearing citations for off-context answers).
+* ⚡ **Redis Memory & Cache**: Uses Redis for chat history serialization and prompt caching, featuring a fully functional cache-clear endpoint.
+* 💻 **Obsidian Dark Glass UI**: Redesigned from scratch with custom neon gradients, glassmorphic layout elements, and inline **marked.js** markdown rendering.
+* 📈 **LangSmith Tracing**: Integrated tracing for latency, token counts, and chain visualizations.
 
 ---
 
-# 🏗️ Architecture
+## 🏗️ Architecture
 
 ```text
                     +-----------------------+
@@ -34,10 +42,10 @@ The application allows users to upload PDF documents or index website URLs, buil
                                |
                                |
                                ▼
-                   HTML / CSS / JavaScript
+                    HTML / CSS / JavaScript
                                |
                                ▼
-                     FastAPI REST Backend
+                      FastAPI REST Backend
                                |
          +---------------------+---------------------+
          |                     |                     |
@@ -51,7 +59,7 @@ The application allows users to upload PDF documents or index website URLs, buil
            Text Chunking
                     |
                     ▼
- Google Gemini Embeddings
+ Log-scaled Gemini Embeddings
                     |
                     ▼
              FAISS Vector DB
@@ -68,10 +76,10 @@ The application allows users to upload PDF documents or index website URLs, buil
 
 ---
 
-# 📁 Project Structure
+## 📁 Project Structure
 
 ```text
-Internal_Knowledge_Assistants/
+Internal_Knowledge_Assistant/
 │
 ├── backend/
 │   ├── app.py
@@ -99,367 +107,193 @@ Internal_Knowledge_Assistants/
 
 ---
 
-# 🛠️ Tech Stack
+## 🛠️ Tech Stack
 
-| Category     | Technology              |
-| ------------ | ----------------------- |
-| Language     | Python 3.11+            |
-| Backend      | FastAPI                 |
-| Frontend     | HTML5, CSS3, JavaScript |
-| LLM          | Google Gemini           |
-| Framework    | LangChain               |
-| Vector Store | FAISS                   |
-| Embeddings   | Gemini Embeddings       |
-| Memory       | Redis                   |
-| Cache        | Redis                   |
-| Monitoring   | LangSmith               |
-| PDF Loader   | PyPDF                   |
-| Web Loader   | BeautifulSoup4          |
-| Environment  | python-dotenv           |
+| Category | Technology |
+| :--- | :--- |
+| **Language** | Python 3.11+ |
+| **Backend** | FastAPI |
+| **Frontend** | HTML5, CSS3, JavaScript (marked.js) |
+| **LLM** | Google Gemini |
+| **Framework** | LangChain |
+| **Vector Store** | FAISS |
+| **Embeddings** | Gemini Embeddings |
+| **Memory** | Redis |
+| **Cache** | Redis |
+| **Monitoring** | LangSmith |
+| **PDF Loader** | PyPDF |
+| **Web Loader** | BeautifulSoup4 |
+| **Environment** | python-dotenv |
 
 ---
 
-# ⚙️ Installation
+## ⚙️ Installation
 
-## 1. Clone the Repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/<your-username>/Internal_Knowledge_Assistants.git
-
 cd Internal_Knowledge_Assistants
 ```
 
----
+### 2. Create Virtual Environment
 
-## 2. Create Virtual Environment
-
-Windows
-
+**Windows:**
 ```bash
 python -m venv .venv
-```
-
-Activate
-
-```bash
 .venv\Scripts\activate
 ```
 
-Linux / macOS
-
+**Linux / macOS:**
 ```bash
 python3 -m venv .venv
-
 source .venv/bin/activate
 ```
 
----
-
-## 3. Install Dependencies
+### 3. Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
+### 4. Configure Environment Variables
 
-## 4. Configure Environment Variables
-
-Create a `.env` file.
-
-Example:
+Create a `.env` file in the root directory:
 
 ```env
 GOOGLE_API_KEY=YOUR_GEMINI_KEY
 
 LANGCHAIN_API_KEY=YOUR_LANGSMITH_KEY
-
 LANGCHAIN_PROJECT=Internal Knowledge Assistant
-
 LANGCHAIN_TRACING_V2=true
 
 REDIS_HOST=localhost
 REDIS_PORT=6379
 
-HOST=0.0.0.0
+HOST=127.0.0.1
 PORT=8000
 DEBUG=True
 ```
 
+> [!WARNING]
+> Never commit your `.env` file to version control. Ensure it is listed in your `.gitignore`.
+
 ---
 
-# ▶️ Running the Project
+## ▶️ Running the Project
 
-## Start Redis
-
+### 1. Start Redis
+Ensure Redis is running locally:
 ```bash
 redis-server
 ```
 
----
-
-## Run FastAPI
-
+### 2. Run FastAPI Server
 ```bash
 uvicorn backend.app:app --reload
 ```
 
-Backend URL
+* **Backend URL**: [http://localhost:8000](http://localhost:8000)
+* **Swagger Documentation**: [http://localhost:8000/docs](http://localhost:8000/docs)
+* **ReDoc**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-```
-http://localhost:8000
-```
-
-Swagger Documentation
-
-```
-http://localhost:8000/docs
-```
-
-ReDoc
-
-```
-http://localhost:8000/redoc
-```
-
----
-
-## Run Frontend
-
-Open
-
-```
-frontend/index.html
-```
-
-or serve using
-
+### 3. Open Frontend Dashboard
+Open `frontend/index.html` in your browser, or serve it using Python:
 ```bash
 python -m http.server
 ```
 
 ---
 
-# 📄 Upload Workflow
+## 📄 Upload & Retrieval Workflows
 
-1. Upload PDF
-2. PDF is loaded
-3. Text is cleaned
-4. Text is chunked
-5. Embeddings are generated
-6. Stored inside FAISS
-7. Retriever is created
-8. User asks question
-9. Relevant chunks retrieved
-10. Gemini generates grounded response
+### Upload & Index Workflow
+1. Upload PDF / website URL.
+2. Text content is extracted & cleaned.
+3. Split into Recursive Character chunks.
+4. Gemini embeds chunks in batches of 100 (handles 429 retries).
+5. FAISS index created and stored locally.
 
----
-
-# 🌐 Website Workflow
-
+### Retrieval Pipeline
 ```text
-Website URL
-
-      │
-
-      ▼
-
-BeautifulSoup Loader
-
-      ▼
-
-Clean HTML
-
-      ▼
-
-Split into Chunks
-
-      ▼
-
-Embeddings
-
-      ▼
-
-FAISS
-
-      ▼
-
-Retriever
-
-      ▼
-
-Gemini Response
+Question ──► Retriever ──► Relevant Chunks ──► Prompt Template ──► Gemini LLM ──► Answer + Sources
 ```
 
 ---
 
-# 💬 API Endpoints
+## 💬 API Endpoints
 
-| Method | Endpoint                | Description           |
-| ------ | ----------------------- | --------------------- |
-| POST   | `/upload/pdf`           | Upload PDF            |
-| POST   | `/upload/url`           | Index Website         |
-| POST   | `/chat`                 | Ask Question          |
-| GET    | `/session/new`          | Create Session        |
-| GET    | `/history/{session_id}` | Conversation History  |
-| GET    | `/health`               | Health Check          |
-| GET    | `/stats`                | Statistics            |
-| DELETE | `/cache`                | Clear Cache           |
-| DELETE | `/memory/{session_id}`  | Clear Session Memory  |
-| DELETE | `/knowledge-base`       | Delete FAISS Index    |
-| POST   | `/reload`               | Reload Knowledge Base |
-
----
-
-# 🧠 Retrieval Pipeline
-
-```text
-Question
-
-   │
-
-   ▼
-
-Retriever
-
-   │
-
-   ▼
-
-Relevant Chunks
-
-   │
-
-   ▼
-
-Prompt Template
-
-   │
-
-   ▼
-
-Gemini LLM
-
-   │
-
-   ▼
-
-Answer + Sources
-```
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| **POST** | `/api/upload/pdf` | Upload PDF and run chunk indexer |
+| **POST** | `/api/upload/url` | Ingest and index Website URL |
+| **POST** | `/api/chat` | Chat with RAG (or conversation fallback) |
+| **GET** | `/api/session/new` | Start a new session session ID |
+| **GET** | `/api/history/{session_id}` | Retrieve chat history of a session |
+| **GET** | `/api/health` | Check backend service health status |
+| **GET** | `/api/stats` | Retrieve index & token database stats |
+| **DELETE** | `/api/cache` | Flush Redis cache |
+| **DELETE** | `/api/memory/{session_id}` | Clear conversation memory of session |
+| **DELETE** | `/api/knowledge-base` | Purge local FAISS index files |
+| **POST** | `/api/reload` | Force reload of FAISS database |
 
 ---
 
-# 📊 LangSmith Monitoring
+## 📊 LangSmith Monitoring
 
-The project supports LangSmith tracing for:
+Traces are automatically published for:
+* LLM calls and latency.
+* Prompt template variables.
+* Retriever search efficiency.
+* Token count evaluations.
 
-* LLM Calls
-* Prompt Execution
-* Retriever Performance
-* Token Usage
-* Latency
-* Chain Visualization
-* Debugging
-* Prompt Evaluation
-
-Enable tracing by setting:
-
+Enable monitoring by checking the environment flags in your `.env`:
 ```env
 LANGCHAIN_TRACING_V2=true
 ```
 
 ---
 
-# 📦 Core Components
+## 🔒 Security Notes
 
-| Module         | Responsibility            |
-| -------------- | ------------------------- |
-| config.py      | Application configuration |
-| loader.py      | Load PDFs and websites    |
-| vectorstore.py | FAISS operations          |
-| rag.py         | Retrieval pipeline        |
-| memory.py      | Redis conversation memory |
-| cache.py       | Redis cache               |
-| routes.py      | API endpoints             |
-| prompts.py     | Prompt templates          |
-| utils.py       | Utility helpers           |
-| app.py         | FastAPI application       |
+* API keys are kept strictly local in the `.env` file.
+* Uploaded documents are saved under the local `./uploads` directory.
+* The FAISS vector database operates completely offline on your disk under `./faiss_index`.
+* Redis caches and session histories are volatile and stored locally.
 
 ---
 
-# 🔒 Security Notes
+## 🚀 Future Enhancements
 
-* API keys are stored in `.env`
-* `.env` should never be committed
-* Uploaded documents remain local
-* Vector database is stored locally
-* Redis stores temporary chat history and cached responses
-
----
-
-# 🚀 Future Enhancements
-
-* Authentication & user management
-* Multi-user document isolation
-* Streaming LLM responses
-* Hybrid search (Keyword + Vector)
-* Multiple vector store support
-* Document versioning
-* OCR support for scanned PDFs
-* Docker & Docker Compose deployment
-* Cloud storage integration
-* Kubernetes deployment
+* Authentication & user account levels.
+* Multi-tenant document database isolation.
+* Streaming responses using SSE.
+* Hybrid keyword-vector search.
+* OCR support for scanned documents.
+* Dockerized compose configurations.
 
 ---
 
-# 📸 Screenshots
-
-Add screenshots here after running the application.
-
-```text
-docs/
-├── home.png
-├── upload.png
-├── chat.png
-└── sources.png
-```
-
----
-
-# 🤝 Contributing
+## 🤝 Contributing
 
 1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Push to your branch.
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the branch (`git push origin feature/AmazingFeature`).
 5. Open a Pull Request.
 
 ---
 
-# 📄 License
+## 👨‍💻 Author
 
-This project is licensed under the MIT License.
-
----
-
-# 👨‍💻 Author
-
-**Sourav**
-
-**Data Engineer | AI Engineer | LangChain Developer**
-
-* 12+ years of experience in Data Engineering & ETL
-* Passionate about Generative AI, RAG, LangChain, LLM Applications, and Intelligent Data Systems
+**Sourav**  
+*Data Engineer | AI Engineer*
 
 ---
 
-# ⭐ Support
+## ⭐ Support
 
 If you found this project helpful:
-
-* ⭐ Star the repository
-* 🍴 Fork the project
-* 🐛 Report issues
-* 💡 Suggest new features
-
-Contributions and feedback are always welcome.
+* ⭐ **Star** the repository
+* 🍴 **Fork** the project
+* 🐛 **Report** issues or suggest features
