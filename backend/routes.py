@@ -32,7 +32,7 @@ from backend.utils import (
     LOGGER,
 )
 
-router = APIRouter(prefix="/api", tags=["Internal Knowledge Assistant"])
+router = APIRouter(tags=["Internal Knowledge Assistant"])
 
 loader = DocumentLoader()
 
@@ -99,6 +99,8 @@ async def upload_pdf(
             chunks
         )
 
+        redis_cache.clear()
+
         return {
 
             "success": True,
@@ -116,6 +118,18 @@ async def upload_pdf(
     except Exception as e:
 
         LOGGER.exception(e)
+
+        err_str = str(e).lower()
+        if "authentication" in err_str or "unauthenticated" in err_str or "401" in err_str or "blocked" in err_str:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired Gemini API key. Please check your GOOGLE_API_KEY in the .env file."
+            )
+        if "429" in err_str or "quota" in err_str or "rate limit" in err_str:
+            raise HTTPException(
+                status_code=429,
+                detail="Gemini API rate limit or quota exceeded. Please wait a moment before trying again."
+            )
 
         raise HTTPException(
             status_code=500,
@@ -149,6 +163,8 @@ async def upload_url(
             chunks
         )
 
+        redis_cache.clear()
+
         return {
 
             "success": True,
@@ -166,6 +182,18 @@ async def upload_url(
     except Exception as e:
 
         LOGGER.exception(e)
+
+        err_str = str(e).lower()
+        if "authentication" in err_str or "unauthenticated" in err_str or "401" in err_str or "blocked" in err_str:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired Gemini API key. Please check your GOOGLE_API_KEY in the .env file."
+            )
+        if "429" in err_str or "quota" in err_str or "rate limit" in err_str:
+            raise HTTPException(
+                status_code=429,
+                detail="Gemini API rate limit or quota exceeded. Please wait a moment before trying again."
+            )
 
         raise HTTPException(
             status_code=500,
@@ -218,6 +246,8 @@ async def upload_and_chat(
             chunks
         )
 
+        redis_cache.clear()
+
         response = rag_pipeline.chat(
 
             question=question,
@@ -247,6 +277,18 @@ async def upload_and_chat(
     except Exception as e:
 
         LOGGER.exception(e)
+
+        err_str = str(e).lower()
+        if "authentication" in err_str or "unauthenticated" in err_str or "401" in err_str or "blocked" in err_str:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired Gemini API key. Please check your GOOGLE_API_KEY in the .env file."
+            )
+        if "429" in err_str or "quota" in err_str or "rate limit" in err_str:
+            raise HTTPException(
+                status_code=429,
+                detail="Gemini API rate limit or quota exceeded. Please wait a moment before trying again."
+            )
 
         raise HTTPException(
             status_code=500,
@@ -280,6 +322,18 @@ async def chat(request: ChatRequest):
 
         LOGGER.exception(e)
 
+        err_str = str(e).lower()
+        if "authentication" in err_str or "unauthenticated" in err_str or "401" in err_str or "blocked" in err_str:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid or expired Gemini API key. Please check your GOOGLE_API_KEY in the .env file."
+            )
+        if "429" in err_str or "quota" in err_str or "rate limit" in err_str:
+            raise HTTPException(
+                status_code=429,
+                detail="Gemini API rate limit or quota exceeded. Please wait a moment before trying again."
+            )
+
         raise HTTPException(
             status_code=500,
             detail=str(e),
@@ -300,6 +354,7 @@ async def chat_history(session_id: str):
         return {
             "success": True,
             "session_id": session_id,
+            "history": history,
             "messages": history,
             "count": len(history),
         }
@@ -454,6 +509,32 @@ async def reload_pipeline():
             "success": True,
             "message": "Pipeline reloaded successfully.",
             "indexed_chunks": rag_pipeline.chunk_count(),
+        }
+
+    except Exception as e:
+
+        LOGGER.exception(e)
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
+
+
+# ==========================================================
+# Clear Cache
+# ==========================================================
+
+@router.delete("/cache")
+async def clear_cache():
+
+    try:
+
+        redis_cache.clear()
+
+        return {
+            "success": True,
+            "message": "Cache cleared successfully.",
         }
 
     except Exception as e:

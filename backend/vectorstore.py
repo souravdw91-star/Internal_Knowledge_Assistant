@@ -6,6 +6,7 @@ Creates, updates, loads and searches the FAISS vector database.
 
 from pathlib import Path
 from typing import List, Optional
+import time
 
 from langchain_core.documents import Document
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
@@ -45,10 +46,47 @@ class VectorStoreManager:
 
         LOGGER.info("Creating FAISS index...")
 
-        self.vectorstore = FAISS.from_documents(
-            documents=documents,
-            embedding=self.embeddings,
-        )
+        batch_size = 100
+        first_batch = documents[:batch_size]
+
+        # Initialize FAISS with first batch (with retry)
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                self.vectorstore = FAISS.from_documents(
+                    documents=first_batch,
+                    embedding=self.embeddings,
+                )
+                break
+            except Exception as ex:
+                err_str = str(ex).lower()
+                if "429" in err_str or "quota" in err_str or "exhausted" in err_str:
+                    if attempt < max_retries - 1:
+                        LOGGER.warning(f"Rate limit hit during index creation. Retrying in 30 seconds (Attempt {attempt+1}/{max_retries})...")
+                        time.sleep(30.0)
+                        continue
+                raise
+
+        remaining = documents[batch_size:]
+        if remaining:
+            LOGGER.info(f"Adding remaining {len(remaining)} chunks in batches of {batch_size}...")
+            for i in range(0, len(remaining), batch_size):
+                time.sleep(1.0)
+                batch_docs = remaining[i:i+batch_size]
+                
+                # Retry loop for batch addition
+                for attempt in range(max_retries):
+                    try:
+                        self.vectorstore.add_documents(batch_docs)
+                        break
+                    except Exception as ex:
+                        err_str = str(ex).lower()
+                        if "429" in err_str or "quota" in err_str or "exhausted" in err_str:
+                            if attempt < max_retries - 1:
+                                LOGGER.warning(f"Rate limit hit during batch addition. Retrying in 30 seconds (Attempt {attempt+1}/{max_retries})...")
+                                time.sleep(30.0)
+                                continue
+                        raise
 
         self.save()
 
@@ -79,10 +117,29 @@ class VectorStoreManager:
             return
 
         LOGGER.info(
-            f"Adding {len(documents)} chunks to vector database."
+            f"Adding {len(documents)} chunks to vector database in batches..."
         )
 
-        self.vectorstore.add_documents(documents)
+        batch_size = 100
+        max_retries = 3
+        for i in range(0, len(documents), batch_size):
+            if i > 0:
+                time.sleep(1.0)
+            batch_docs = documents[i:i+batch_size]
+            
+            # Retry loop for batch addition
+            for attempt in range(max_retries):
+                try:
+                    self.vectorstore.add_documents(batch_docs)
+                    break
+                except Exception as ex:
+                    err_str = str(ex).lower()
+                    if "429" in err_str or "quota" in err_str or "exhausted" in err_str:
+                        if attempt < max_retries - 1:
+                            LOGGER.warning(f"Rate limit hit during batch addition. Retrying in 30 seconds (Attempt {attempt+1}/{max_retries})...")
+                            time.sleep(30.0)
+                            continue
+                    raise
 
         self.save()
 
@@ -122,7 +179,7 @@ class VectorStoreManager:
         Load an existing FAISS index.
         """
 
-        if not self.index_path.exists():
+        if not self.exists():
 
             LOGGER.warning("FAISS index not found.")
 
@@ -284,7 +341,8 @@ class VectorStoreManager:
 
         return (
             self.index_path.exists()
-            and any(self.index_path.iterdir())
+            and (self.index_path / "index.faiss").exists()
+            and (self.index_path / "index.pkl").exists()
         )
 
     # -----------------------------------------------------

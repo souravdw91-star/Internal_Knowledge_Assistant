@@ -1,4 +1,4 @@
-const API_BASE = "http://localhost:8000";
+const API_BASE = "/api";
 
 let sessionId = null;
 
@@ -111,7 +111,11 @@ function addMessage(role, text) {
 
     avatar.textContent = role === "user" ? "🧑" : "🤖";
 
-    bubble.textContent = text;
+    if (role === "assistant" && window.marked) {
+        bubble.innerHTML = window.marked.parse(text);
+    } else {
+        bubble.textContent = text;
+    }
 
     chatMessages.appendChild(template);
 
@@ -375,7 +379,7 @@ async function loadHistory() {
 
         clearMessages();
 
-        (data.history || []).forEach(msg => {
+        (data.history || data.messages || []).forEach(msg => {
 
             addMessage(
                 msg.role,
@@ -402,12 +406,21 @@ async function refreshHealth() {
 
         const response = await fetch(`${API_BASE}/health`);
 
-        if (!response.ok) return;
+        if (!response.ok) {
+            serverStatus.textContent = "Error";
+            serverStatus.className = "status-badge offline";
+            return;
+        }
 
         const data = await response.json();
 
-        serverStatus.textContent =
-            data.status || "Unknown";
+        if (data.status === "healthy") {
+            serverStatus.textContent = "Online";
+            serverStatus.className = "status-badge online";
+        } else {
+            serverStatus.textContent = "Error";
+            serverStatus.className = "status-badge offline";
+        }
 
         chunkLabel.textContent =
             data.indexed_chunks ?? 0;
@@ -415,6 +428,7 @@ async function refreshHealth() {
     } catch (err) {
 
         serverStatus.textContent = "Offline";
+        serverStatus.className = "status-badge offline";
 
     }
 
@@ -478,6 +492,10 @@ async function deleteKnowledgeBase() {
 
         chunkLabel.textContent = "0";
 
+        pdfFile.value = "";
+        const display = document.getElementById("fileNameDisplay");
+        if (display) display.textContent = "No file selected";
+
         showToast("Knowledge base deleted.");
 
     } catch (err) {
@@ -496,6 +514,10 @@ async function startNewSession() {
 
     renderSources([]);
 
+    pdfFile.value = "";
+    const display = document.getElementById("fileNameDisplay");
+    if (display) display.textContent = "No file selected";
+
     await createSession();
 
     showToast("New session created.");
@@ -509,6 +531,20 @@ async function startNewSession() {
 uploadPdfBtn.addEventListener(
     "click",
     uploadPDF
+);
+
+pdfFile.addEventListener(
+    "change",
+    () => {
+        const display = document.getElementById("fileNameDisplay");
+        if (display) {
+            if (pdfFile.files.length > 0) {
+                display.textContent = pdfFile.files[0].name;
+            } else {
+                display.textContent = "No file selected";
+            }
+        }
+    }
 );
 
 uploadUrlBtn.addEventListener(

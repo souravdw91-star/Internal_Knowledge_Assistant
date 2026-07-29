@@ -10,14 +10,10 @@
     <title>Internal Knowledge Assistant</title>
 
     <link rel="stylesheet" href="style.css">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
-
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 
 <body>
@@ -31,74 +27,30 @@
         <aside class="sidebar">
 
             <div class="logo">
-
-                <h2>📚 Internal Knowledge Assistant</h2>
-
+                <h2>📚 Knowledge RAG</h2>
                 <p>LangChain • Gemini • FAISS</p>
-
             </div>
 
             <div class="menu">
-
                 <button id="newSessionBtn" class="menu-btn">
-
-                    New Session
-
+                    🔄 New Session
                 </button>
-
                 <button id="clearChatBtn" class="menu-btn">
-
-                    Clear Chat
-
+                    💬 Clear Chat
                 </button>
-
                 <button id="clearCacheBtn" class="menu-btn">
-
-                    Clear Cache
-
+                    🧹 Clear Cache
                 </button>
-
                 <button id="deleteKbBtn" class="menu-btn danger">
-
-                    Delete Knowledge Base
-
+                    🗑️ Delete Knowledge Base
                 </button>
-
             </div>
 
             <div class="status-card">
-
                 <h4>System Status</h4>
-
-                <p>
-
-                    Session :
-                    <span id="sessionId">
-                        -
-                    </span>
-
-                </p>
-
-                <p>
-
-                    Chunks :
-                    <span id="chunkCount">
-                        0
-                    </span>
-
-                </p>
-
-                <p>
-
-                    Status :
-                    <span id="serverStatus">
-
-                        Checking...
-
-                    </span>
-
-                </p>
-
+                <p>Session: <span id="sessionId">-</span></p>
+                <p>Chunks: <span id="chunkCount">0</span></p>
+                <p>Status: <span id="serverStatus" class="status-badge offline">Checking...</span></p>
             </div>
 
         </aside>
@@ -135,51 +87,33 @@
             <!-- ========================================= -->
 
             <section class="upload-section">
-
                 <div class="card">
-
-                    <h3>
-
-                        Upload PDF
-
-                    </h3>
-
+                    <h3>📁 Upload PDF</h3>
+                    <label for="pdfFile" class="custom-file-upload">
+                        <span>Click to choose PDF</span>
+                        <span id="fileNameDisplay" class="file-name">No file selected</span>
+                    </label>
                     <input
                         type="file"
                         id="pdfFile"
                         accept=".pdf">
-
                     <button
                         id="uploadPdfBtn">
-
                         Upload PDF
-
                     </button>
-
                 </div>
 
                 <div class="card">
-
-                    <h3>
-
-                        Upload Website
-
-                    </h3>
-
+                    <h3>🌐 Index Website</h3>
                     <input
                         type="text"
                         id="urlInput"
                         placeholder="https://example.com">
-
                     <button
                         id="uploadUrlBtn">
-
                         Upload URL
-
                     </button>
-
                 </div>
-
             </section>
 
             <!-- ========================================= -->

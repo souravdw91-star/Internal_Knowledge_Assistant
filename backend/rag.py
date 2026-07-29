@@ -187,23 +187,39 @@ class RAGPipeline:
         }
         """
 
-        self.initialize()
-
         if not self.knowledge_base_exists():
 
-            return {
-                "answer": "No knowledge base found. Please upload a document first.",
-                "sources": [],
-            }
+            try:
+                response = self.llm.invoke(question)
+                return {
+                    "answer": response.content.strip(),
+                    "sources": [],
+                }
+            except Exception as e:
+                LOGGER.exception(e)
+                return {
+                    "answer": "No knowledge base found. Please upload a document first.",
+                    "sources": [],
+                }
+
+        self.initialize()
 
         documents = self.retrieve_documents(question)
 
         if len(documents) == 0:
 
-            return {
-                "answer": NO_CONTEXT_RESPONSE,
-                "sources": [],
-            }
+            try:
+                response = self.llm.invoke(question)
+                return {
+                    "answer": response.content.strip(),
+                    "sources": [],
+                }
+            except Exception as e:
+                LOGGER.exception(e)
+                return {
+                    "answer": NO_CONTEXT_RESPONSE,
+                    "sources": [],
+                }
 
         response = self.chain.invoke(
             {
@@ -219,6 +235,11 @@ class RAGPipeline:
         sources = self.extract_sources(
             documents
         )
+
+        # Clear sources if the LLM answered using general knowledge (and did not reference the document)
+        has_source_reference = any(src["source"].lower() in answer.lower() for src in sources) or "source:" in answer.lower()
+        if not has_source_reference:
+            sources = []
 
         return {
             "answer": answer.strip(),
@@ -400,6 +421,18 @@ class RAGPipeline:
         except Exception as e:
 
             LOGGER.exception(e)
+
+            err_msg = str(e).lower()
+            if "authentication" in err_msg or "unauthenticated" in err_msg or "401" in err_msg or "blocked" in err_msg:
+                return {
+                    "answer": "Error: Invalid or expired Gemini API key. Please check your GOOGLE_API_KEY in the .env file.",
+                    "sources": [],
+                }
+            if "429" in err_msg or "quota" in err_msg or "rate limit" in err_msg:
+                return {
+                    "answer": "Error: Gemini API rate limit or quota exceeded. Please wait a moment before trying again.",
+                    "sources": [],
+                }
 
             return {
                 "answer": "An unexpected error occurred while generating the response.",

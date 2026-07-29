@@ -63,7 +63,7 @@ GEMINI_CHAT_MODEL = os.getenv(
 
 GEMINI_EMBEDDING_MODEL = os.getenv(
     "GEMINI_EMBEDDING_MODEL",
-    "models/text-embedding-004"
+    "models/gemini-embedding-001"
 )
 
 
